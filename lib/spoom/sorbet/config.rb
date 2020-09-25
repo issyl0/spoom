@@ -47,7 +47,7 @@ module Spoom
         sig { params(sorbet_config: String).returns(Spoom::Sorbet::Config) }
         def parse_string(sorbet_config)
           config = Config.new
-          state = T.let(nil, T.nilable(Symbol))
+          state = T.let(nil, T.nilable(::Symbol))
           sorbet_config.each_line do |line|
             line = line.strip
             case line

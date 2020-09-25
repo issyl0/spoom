@@ -1,0 +1,98 @@
+{
+ "repo": "none",
+ "sha": "none",
+ "status": "Success",
+ "branch": "none",
+ "timestamp": "1600866969",
+ "uuid": "0xc3833cf2bee01f3a-0x69a7a288-0x494f-0x9565-0xb0a120445a42d8000x41a7",
+ "metrics": [
+  {
+   "name": "ruby_typer.unknown..types.input.methods.total",
+   "value": 1660
+  },
+  {
+   "name": "ruby_typer.unknown..types.sig.count",
+   "value": 85
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files",
+   "value": 52
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.max_rss",
+   "value": 150487040
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.oublock"
+  },
+  {
+   "name": "ruby_typer.unknown..release.build_timestamp",
+   "value": 1600795376
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.methods.typechecked",
+   "value": 414
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.minor_faults",
+   "value": 37169
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.strict",
+   "value": 5
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.modules.total",
+   "value": 46
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.system_time.us",
+   "value": 103959
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.inblock"
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.true",
+   "value": 46
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.context_switch.voluntary"
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.ignore",
+   "value": 1
+  },
+  {
+   "name": "ruby_typer.unknown..release.build_scm_commit_count",
+   "value": 5916
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.sends.typed",
+   "value": 2183
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.sends.total",
+   "value": 2763
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.user_time.us",
+   "value": 192959
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.bytes",
+   "value": 143717
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.classes.total",
+   "value": 276
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.major_faults"
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.context_switch.involuntary",
+   "value": 1755
+  }
+ ]
+}

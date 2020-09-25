@@ -1,0 +1,99 @@
+{
+ "repo": "none",
+ "sha": "none",
+ "status": "Success",
+ "branch": "none",
+ "timestamp": "1600878154",
+ "uuid": "0x2465c0cbf78ff859-0x6318ed8c-0x41a7-0x89b6-0x5bbd31ba6463dde30x41a7",
+ "metrics": [
+  {
+   "name": "ruby_typer.unknown..run.utilization.max_rss",
+   "value": 150282240
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.methods.typechecked",
+   "value": 414
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.oublock"
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.context_switch.voluntary",
+   "value": 6
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.user_time.us",
+   "value": 197795
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.system_time.us",
+   "value": 107854
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.bytes",
+   "value": 144290
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.classes.total",
+   "value": 276
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.strict",
+   "value": 5
+  },
+  {
+   "name": "ruby_typer.unknown..types.sig.count",
+   "value": 85
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.context_switch.involuntary",
+   "value": 1412
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files",
+   "value": 52
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.sends.total",
+   "value": 2758
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.inblock"
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.modules.total",
+   "value": 46
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.methods.total",
+   "value": 1660
+  },
+  {
+   "name": "ruby_typer.unknown..release.build_scm_commit_count",
+   "value": 5916
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.major_faults"
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.true",
+   "value": 46
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.files.sigil.ignore",
+   "value": 1
+  },
+  {
+   "name": "ruby_typer.unknown..release.build_timestamp",
+   "value": 1600878118
+  },
+  {
+   "name": "ruby_typer.unknown..run.utilization.minor_faults",
+   "value": 37070
+  },
+  {
+   "name": "ruby_typer.unknown..types.input.sends.typed",
+   "value": 2178
+  }
+ ]
+}
