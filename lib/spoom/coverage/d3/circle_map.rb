@@ -143,7 +143,7 @@ module Spoom
           JS
         end
 
-        class Sigils < CircleMap
+        class FileMap < CircleMap
           extend T::Sig
 
           sig { params(id: String, sigils_tree: FileTree).void }

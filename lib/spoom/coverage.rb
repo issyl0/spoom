@@ -66,7 +66,7 @@ module Spoom
         project_name: File.basename(File.expand_path(path)),
         palette: palette,
         snapshots: snapshots,
-        sigils_tree: sigils_tree(path: path),
+        files_tree: files_tree(path: path),
         sorbet_intro_commit: intro_commit,
         sorbet_intro_date: intro_date,
       )
@@ -78,7 +78,7 @@ module Spoom
     end
 
     sig { params(path: String).returns(FileTree) }
-    def self.sigils_tree(path: ".")
+    def self.files_tree(path: ".")
       config = sorbet_config(path: path)
       files = Sorbet.srb_files(config, path: path)
       files.select! { |file| file =~ /\.rb$/ }

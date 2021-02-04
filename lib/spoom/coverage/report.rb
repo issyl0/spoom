@@ -153,9 +153,9 @@ module Spoom
       class Map < Card
         extend T::Sig
 
-        sig { params(sigils_tree: FileTree, title: String).void }
-        def initialize(sigils_tree:, title: "Strictness Map")
-          super(title: title, body: D3::CircleMap::Sigils.new("map_sigils", sigils_tree).html)
+        sig { params(files_tree: FileTree, title: String).void }
+        def initialize(files_tree:, title: "Strictness Map")
+          super(title: title, body: D3::CircleMap::FileMap.new("map_sigils", files_tree).html)
         end
       end
 
@@ -250,14 +250,14 @@ module Spoom
       attr_reader :snapshots
 
       sig { returns(FileTree) }
-      attr_reader :sigils_tree
+      attr_reader :files_tree
 
       sig do
         params(
           project_name: String,
           palette: D3::ColorPalette,
           snapshots: T::Array[Snapshot],
-          sigils_tree: FileTree,
+          files_tree: FileTree,
           sorbet_intro_commit: T.nilable(String),
           sorbet_intro_date: T.nilable(Time),
         ).void
@@ -266,14 +266,14 @@ module Spoom
         project_name:,
         palette:,
         snapshots:,
-        sigils_tree:,
+        files_tree:,
         sorbet_intro_commit: nil,
         sorbet_intro_date: nil
       )
         super(title: project_name, palette: palette)
         @project_name = project_name
         @snapshots = snapshots
-        @sigils_tree = sigils_tree
+        @files_tree = files_tree
         @sorbet_intro_commit = sorbet_intro_commit
         @sorbet_intro_date = sorbet_intro_date
       end
@@ -294,7 +294,7 @@ module Spoom
         last = T.must(snapshots.last)
         cards = []
         cards << Cards::Snapshot.new(snapshot: last)
-        cards << Cards::Map.new(sigils_tree: sigils_tree)
+        cards << Cards::Map.new(files_tree: files_tree)
         cards << Cards::Timeline::Sigils.new(snapshots: snapshots)
         cards << Cards::Timeline::Calls.new(snapshots: snapshots)
         cards << Cards::Timeline::Sigs.new(snapshots: snapshots)
