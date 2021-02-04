@@ -168,9 +168,7 @@ module Spoom
 
           sig { params(node: FileTree::Node).returns(T.nilable(String)) }
           def tree_node_strictness(node)
-            prefix = @sigils_tree.strip_prefix
-            path = node.path
-            path = "#{prefix}/#{path}" if prefix
+            path = node.real_path(@sigils_tree)
             @strictnesses[node] ||= Spoom::Sorbet::Sigils.file_strictness(path)
           end
 

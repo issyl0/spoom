@@ -100,12 +100,20 @@ module Spoom
       # Children of this node (if not empty, it means it's a dir)
       const :children, T::Hash[String, Node], default: {}
 
-      # Full path to this node from root
+      # Display path to this node from root (not including the tree prefix)
       sig { returns(String) }
       def path
         parent = self.parent
         return name unless parent
         "#{parent.path}/#{name}"
+      end
+
+      # Real path to this node (including the tree prefix)
+      sig { params(tree: FileTree).returns(String) }
+      def real_path(tree)
+        prefix = tree.strip_prefix
+        return "#{prefix}/#{path}" if prefix
+        path
       end
     end
 
@@ -174,9 +182,7 @@ module Spoom
 
       sig { params(node: FileTree::Node).returns(T.nilable(String)) }
       def node_strictness(node)
-        path = node.path
-        prefix = tree.strip_prefix
-        path = "#{prefix}/#{path}" if prefix
+        path = node.real_path(tree)
         Spoom::Sorbet::Sigils.file_strictness(path)
       end
 
