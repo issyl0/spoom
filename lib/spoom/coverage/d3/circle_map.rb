@@ -32,6 +32,12 @@ module Spoom
             .node.root, .node.file {
               pointer-events: none;
             }
+
+            .select-score {
+              position: absolute;
+              top: 80px;
+              right: 30px;
+            }
           CSS
         end
 
@@ -46,6 +52,14 @@ module Spoom
                 return height;
             }
 
+            function treeMax(root, key, max = 0) {
+              max = Math.max(root[key] || 0, max);
+              if (root.children && root.children.length > 0)
+                return Math.max(...root.children.map(child => treeMax(child, key, max)));
+              else
+                return max;
+            }
+
             function tooltipMap(d) {
               moveTooltip(d)
                 .html("<b>" + d.data.name + "</b>")
@@ -56,14 +70,14 @@ module Spoom
         sig { override.returns(String) }
         def script
           <<~JS
-            var root = {children: #{@data.to_json}}
-            var dataHeight = treeHeight(root)
+            var dataRoot = {children: #{@data.to_json}}
+            var dataHeight = treeHeight(dataRoot)
 
             var opacity = d3.scaleLinear()
                 .domain([0, dataHeight])
                 .range([0, 0.2])
 
-            root = d3.hierarchy(root)
+            root = d3.hierarchy(dataRoot)
                 .sum((d) => d.children ? d.children.length : 1)
                 .sort((a, b) => b.value - a.value);
 
@@ -71,6 +85,26 @@ module Spoom
               .domain([1, 0])
               .range([strictnessColor("true"), strictnessColor("false")])
               .interpolate(d3.interpolateRgb);
+
+            var unsafeColor = d3.scaleLinear()
+              .domain([0, treeMax(dataRoot, "tunsafe_score")])
+              .range([strictnessColor("true"), strictnessColor("false")])
+              .interpolate(d3.interpolateRgb);
+
+            function nodeColor(d) {
+              var key = document.getElementById("#{id}").score_key;
+              console.log(key);
+              console.log(d.data);
+              if (d.children) {
+                return dirColor(d.data[key]);
+              } else {
+                if (key == "sigils_score") {
+                  return strictnessColor(d.data.strictness);
+                } else {
+                  return unsafeColor(d.data.tunsafe_score);
+                }
+              }
+            }
 
             function redraw() {
               var diameter = document.getElementById("#{id}").clientWidth - 20;
@@ -94,7 +128,7 @@ module Spoom
                 .data(nodes)
                 .enter().append("circle")
                   .attr("class", (d) => d.parent ? d.children ? "node" : "node file" : "node root")
-                  .attr("fill", (d) => d.children ? dirColor(d.data.score) : strictnessColor(d.data.strictness))
+                  .attr("fill", (d) => nodeColor(d))
                   .attr("fill-opacity", (d) => d.children ? opacity(d.depth) : 1)
                   .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); })
                   .on("mouseover", (d) => tooltip.style("opacity", 1))
@@ -138,6 +172,28 @@ module Spoom
               d3.select("##{id}").on("click", () => zoom(root));
             }
 
+            function selectScore(e) {
+              document.getElementById("#{id}").score_key = e.target.value;
+              redraw();
+            }
+            document.getElementById("#{id}").score_key = "sigils_score";
+
+            optSigils = document.createElement("option");
+            optSigils.value = "sigils_score";
+            optSigils.text = "Sigils";
+
+            optTUnsafes = document.createElement("option");
+            optTUnsafes.value = "tunsafe_score";
+            optTUnsafes.text = "T.unsafe";
+
+            opt = document.createElement("select");
+            opt.className = "select-score"
+            opt.appendChild(optSigils);
+            opt.appendChild(optTUnsafes);
+            opt.addEventListener("change", selectScore)
+
+            document.getElementById("#{id}").parentElement.appendChild(opt)
+
             redraw();
             window.addEventListener("resize", redraw);
           JS
@@ -149,24 +205,30 @@ module Spoom
           sig { params(id: String, tree: FileTree).void }
           def initialize(id, tree)
             @strictnesses = T.let(FileTree::Strictnesses.new(tree), FileTree::Strictnesses)
-            @sigil_scores = T.let(ScoreVisitor.new(tree, @strictnesses), ScoreVisitor)
+            @sigils_scores = T.let(SigilsScore.new(tree, @strictnesses), SigilsScore)
+            @tunsafe_scores = T.let(TUnsafeScore.new(tree, @strictnesses), TUnsafeScore)
             super(id, tree.roots.map { |r| tree_node_to_json(r) })
           end
 
           sig { params(node: FileTree::Node).returns(T::Hash[Symbol, T.untyped]) }
           def tree_node_to_json(node)
             if node.children.empty?
-              return { name: node.name, strictness: @strictnesses.node_strictness(node) }
+              return {
+                name: node.name,
+                strictness: @strictnesses.node_strictness(node),
+                tunsafe_score: @tunsafe_scores.node_score(node),
+              }
             end
             {
               name: node.name,
               children: node.children.values.map { |n| tree_node_to_json(n) },
-              score: @sigil_scores.node_score(node),
+              sigils_score: @sigils_scores.node_score(node),
+              tunsafe_score: @tunsafe_scores.node_score(node),
             }
           end
         end
 
-        class ScoreVisitor < FileTree::Visitor
+        class SigilsScore < FileTree::Visitor
           extend T::Sig
 
           sig { params(tree: FileTree, strictnesses: FileTree::Strictnesses).void }
@@ -190,6 +252,33 @@ module Spoom
               @scores[node] = 1.0
               return
             end
+          end
+
+          sig { params(node: FileTree::Node).returns(Float) }
+          def node_score(node)
+            @scores[node] || 0.0
+          end
+        end
+
+        class TUnsafeScore < FileTree::Visitor
+          extend T::Sig
+
+          sig { params(tree: FileTree, strictnesses: FileTree::Strictnesses).void }
+          def initialize(tree, strictnesses)
+            @tree = tree
+            @scores = T.let({}, T::Hash[FileTree::Node, Float])
+            visit_nodes(tree.roots)
+          end
+
+          sig { override.params(node: FileTree::Node).void }
+          def visit_node(node)
+            unless node.children.empty?
+              visit_nodes(node.children.values)
+              @scores[node] = node.children.values.sum { |n| @scores[n] || 0.0 } / node.children.size.to_f
+              return
+            end
+
+            @scores[node] = Sorbet::TUnsafe.t_unsafes_in_file(node.real_path(@tree)).to_f
           end
 
           sig { params(node: FileTree::Node).returns(Float) }
