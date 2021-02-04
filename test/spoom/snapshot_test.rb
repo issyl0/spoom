@@ -30,6 +30,7 @@ module Spoom
         snapshot1.methods_without_sig = 6
         snapshot1.calls_typed = 7
         snapshot1.calls_untyped = 8
+        snapshot1.t_unsafes = 9
         snapshot1.sigils = { "true" => 10 }
         json1 = snapshot1.to_json
 
@@ -39,6 +40,7 @@ module Spoom
         assert_equal(json1, json2)
         assert_equal("sorbet_version", snapshot2.version_static)
         assert_equal(2, snapshot2.files)
+        assert_equal(9, snapshot2.t_unsafes)
         assert_equal(10, snapshot2.sigils["true"])
       end
 
@@ -51,8 +53,9 @@ module Spoom
         assert_equal(9, snapshot.classes)
         assert_equal(1, snapshot.methods_with_sig)
         assert_equal(13, snapshot.methods_without_sig)
-        assert_equal(8, snapshot.calls_typed)
-        assert_equal(1, snapshot.calls_untyped)
+        assert_equal(7, snapshot.calls_typed)
+        assert_equal(3, snapshot.calls_untyped)
+        assert_equal(2, snapshot.t_unsafes)
         project.destroy
       end
 
@@ -65,8 +68,9 @@ module Spoom
         assert_equal(5, snapshot.classes)
         assert_equal(1, snapshot.methods_with_sig)
         assert_equal(8, snapshot.methods_without_sig)
-        assert_equal(8, snapshot.calls_typed)
-        assert_equal(1, snapshot.calls_untyped)
+        assert_equal(7, snapshot.calls_typed)
+        assert_equal(3, snapshot.calls_untyped)
+        assert_equal(2, snapshot.t_unsafes)
         project.destroy
       end
 
@@ -84,7 +88,9 @@ module Spoom
           module A2; end
 
           class A3
-            def foo; end
+            def foo
+              T.unsafe(self).bar
+            end
           end
         RB
         project.write("lib/b.rb", <<~RB)
@@ -100,7 +106,7 @@ module Spoom
         project.write("lib/c.rb", <<~RB)
           # typed: true
           A3.new.foo
-          B1.foo
+          T.unsafe(B1).foo
         RB
         project.write("lib/d.rbi", <<~RB)
           # typed: true

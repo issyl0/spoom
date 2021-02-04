@@ -20,6 +20,7 @@ module Spoom
       prop :methods_with_sig, Integer, default: 0
       prop :calls_untyped, Integer, default: 0
       prop :calls_typed, Integer, default: 0
+      prop :t_unsafes, Integer, default: 0
       prop :sigils, T::Hash[String, Integer], default: Hash.new(0)
 
       # The strictness name as found in the Sorbet metrics file
@@ -53,6 +54,7 @@ module Spoom
         snapshot.methods_without_sig = obj.fetch("methods_without_sig", 0)
         snapshot.calls_typed = obj.fetch("calls_typed", 0)
         snapshot.calls_untyped = obj.fetch("calls_untyped", 0)
+        snapshot.t_unsafes = obj.fetch("t_unsafes", 0)
 
         sigils = obj.fetch("sigils", {})
         if sigils

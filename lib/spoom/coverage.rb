@@ -54,6 +54,9 @@ module Spoom
       snapshot.version_static = Spoom::Sorbet.version_from_gemfile_lock(gem: "sorbet-static", path: path)
       snapshot.version_runtime = Spoom::Sorbet.version_from_gemfile_lock(gem: "sorbet-runtime", path: path)
 
+      files = Sorbet.srb_files(config, path: path).reject { |file| file.end_with?(".rbi") }
+      snapshot.t_unsafes = Sorbet::TUnsafe.t_unsafes_in_files(files)
+
       snapshot
     end
 
