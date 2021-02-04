@@ -68,7 +68,7 @@ module Spoom
       ).void
     end
     def print(out: $stdout, show_strictness: true, colors: true, indent_level: 0)
-      printer = TreePrinter.new(
+      printer = Printer.new(
         tree: self,
         out: out,
         show_strictness: show_strictness,
@@ -120,7 +120,7 @@ module Spoom
     # An internal class used to print a FileTree
     #
     # See `FileTree#print`
-    class TreePrinter < Spoom::Printer
+    class Printer < Spoom::Printer
       extend T::Sig
 
       sig { returns(FileTree) }
