@@ -149,15 +149,14 @@ module Spoom
           sig { params(id: String, sigils_tree: FileTree).void }
           def initialize(id, sigils_tree)
             @scores = T.let({}, T::Hash[FileTree::Node, Float])
-            @strictnesses = T.let({}, T::Hash[FileTree::Node, T.nilable(String)])
-            @sigils_tree = sigils_tree
+            @strictnesses = T.let(FileTree::Strictnesses.new(sigils_tree), FileTree::Strictnesses)
             super(id, sigils_tree.roots.map { |r| tree_node_to_json(r) })
           end
 
           sig { params(node: FileTree::Node).returns(T::Hash[Symbol, T.untyped]) }
           def tree_node_to_json(node)
             if node.children.empty?
-              return { name: node.name, strictness: tree_node_strictness(node) }
+              return { name: node.name, strictness: @strictnesses.node_strictness(node) }
             end
             {
               name: node.name,
@@ -166,17 +165,11 @@ module Spoom
             }
           end
 
-          sig { params(node: FileTree::Node).returns(T.nilable(String)) }
-          def tree_node_strictness(node)
-            path = node.real_path(@sigils_tree)
-            @strictnesses[node] ||= Spoom::Sorbet::Sigils.file_strictness(path)
-          end
-
           sig { params(node: FileTree::Node).returns(Float) }
           def tree_node_score(node)
             unless @scores.key?(node)
               if node.name =~ /\.rbi?$/
-                case tree_node_strictness(node)
+                case @strictnesses.node_strictness(node)
                 when "true", "strict", "strong"
                   @scores[node] = 1.0
                 end

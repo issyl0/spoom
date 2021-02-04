@@ -117,6 +117,22 @@ module Spoom
       end
     end
 
+    # An abstract visitor for a FileTree
+    class Visitor
+      extend T::Helpers
+      extend T::Sig
+
+      abstract!
+
+      sig { abstract.params(node: FileTree::Node).void }
+      def visit_node(node); end
+
+      sig { params(nodes: T::Array[FileTree::Node]).void }
+      def visit_nodes(nodes)
+        nodes.each { |node| visit_node(node) }
+      end
+    end
+
     # An internal class used to print a FileTree
     #
     # See `FileTree#print`
@@ -139,6 +155,7 @@ module Spoom
         super(out: out, colors: colors, indent_level: indent_level)
         @tree = tree
         @show_strictness = show_strictness
+        @strictnesses = T.let(Strictnesses.new(tree), T.nilable(Strictnesses)) if show_strictness
       end
 
       sig { void }
@@ -150,15 +167,11 @@ module Spoom
       def print_node(node)
         printt
         if node.children.empty?
-          if @show_strictness
-            strictness = node_strictness(node)
-            if @colors
-              print_colored(node.name, strictness_color(strictness))
-            elsif strictness
-              print("#{node.name} (#{strictness})")
-            else
-              print(node.name.to_s)
-            end
+          strictness = @strictnesses&.node_strictness(node) if @show_strictness
+          if @colors && strictness
+            print_colored(node.name, strictness_color(strictness))
+          elsif strictness
+            print("#{node.name} (#{strictness})")
           else
             print(node.name.to_s)
           end
@@ -180,12 +193,6 @@ module Spoom
 
       private
 
-      sig { params(node: FileTree::Node).returns(T.nilable(String)) }
-      def node_strictness(node)
-        path = node.real_path(tree)
-        Spoom::Sorbet::Sigils.file_strictness(path)
-      end
-
       sig { params(strictness: T.nilable(String)).returns(Symbol) }
       def strictness_color(strictness)
         case strictness
@@ -196,6 +203,32 @@ module Spoom
         else
           :uncolored
         end
+      end
+    end
+
+    class Strictnesses < Visitor
+      extend T::Sig
+
+      sig { params(tree: FileTree).void }
+      def initialize(tree)
+        @tree = tree
+        @strictnesses = T.let({}, T::Hash[FileTree::Node, T.nilable(String)])
+        visit_nodes(tree.roots)
+      end
+
+      sig { override.params(node: FileTree::Node).void }
+      def visit_node(node)
+        if node.children.empty?
+          path = node.real_path(@tree)
+          @strictnesses[node] = Spoom::Sorbet::Sigils.file_strictness(path)
+        else
+          visit_nodes(node.children.values)
+        end
+      end
+
+      sig { params(node: FileTree::Node).returns(T.nilable(String)) }
+      def node_strictness(node)
+        @strictnesses[node]
       end
     end
   end
