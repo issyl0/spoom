@@ -146,11 +146,11 @@ module Spoom
         class FileMap < CircleMap
           extend T::Sig
 
-          sig { params(id: String, sigils_tree: FileTree).void }
-          def initialize(id, sigils_tree)
-            @scores = T.let({}, T::Hash[FileTree::Node, Float])
-            @strictnesses = T.let(FileTree::Strictnesses.new(sigils_tree), FileTree::Strictnesses)
-            super(id, sigils_tree.roots.map { |r| tree_node_to_json(r) })
+          sig { params(id: String, tree: FileTree).void }
+          def initialize(id, tree)
+            @strictnesses = T.let(FileTree::Strictnesses.new(tree), FileTree::Strictnesses)
+            @sigil_scores = T.let(ScoreVisitor.new(tree, @strictnesses), ScoreVisitor)
+            super(id, tree.roots.map { |r| tree_node_to_json(r) })
           end
 
           sig { params(node: FileTree::Node).returns(T::Hash[Symbol, T.untyped]) }
@@ -161,22 +161,39 @@ module Spoom
             {
               name: node.name,
               children: node.children.values.map { |n| tree_node_to_json(n) },
-              score: tree_node_score(node),
+              score: @sigil_scores.node_score(node),
             }
+          end
+        end
+
+        class ScoreVisitor < FileTree::Visitor
+          extend T::Sig
+
+          sig { params(tree: FileTree, strictnesses: FileTree::Strictnesses).void }
+          def initialize(tree, strictnesses)
+            @tree = tree
+            @strictnesses = strictnesses
+            @scores = T.let({}, T::Hash[FileTree::Node, Float])
+            visit_nodes(tree.roots)
+          end
+
+          sig { override.params(node: FileTree::Node).void }
+          def visit_node(node)
+            unless node.children.empty?
+              visit_nodes(node.children.values)
+              @scores[node] = node.children.values.sum { |n| @scores[n] || 0.0 } / node.children.size.to_f
+              return
+            end
+
+            case @strictnesses.node_strictness(node)
+            when "true", "strict", "strong"
+              @scores[node] = 1.0
+              return
+            end
           end
 
           sig { params(node: FileTree::Node).returns(Float) }
-          def tree_node_score(node)
-            unless @scores.key?(node)
-              if node.name =~ /\.rbi?$/
-                case @strictnesses.node_strictness(node)
-                when "true", "strict", "strong"
-                  @scores[node] = 1.0
-                end
-              elsif !node.children.empty?
-                @scores[node] = node.children.values.sum { |n| tree_node_score(n) } / node.children.size.to_f
-              end
-            end
+          def node_score(node)
             @scores[node] || 0.0
           end
         end
