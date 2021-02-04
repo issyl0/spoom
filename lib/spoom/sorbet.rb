@@ -91,7 +91,7 @@ module Spoom
         metrics_file = "metrics.tmp"
         metrics_path = "#{path}/#{metrics_file}"
         T.unsafe(self).srb_tc(
-          "--isolate-error-code 1000",
+          "--error-white-list 1000",
           "--no-error-count",
           "--metrics-file",
           metrics_file,

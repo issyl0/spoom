@@ -23,7 +23,7 @@ module Spoom
         "--no-config",
         new_config.options_string,
         path: path,
-        capture_err: false,
+        capture_err: true,
         sorbet_bin: sorbet_bin
       )
 
