@@ -305,6 +305,52 @@ module Spoom
           end
         end
 
+        class TUnsafes < Timeline
+          extend T::Sig
+
+          sig { params(id: String, snapshots: T::Array[Snapshot]).void }
+          def initialize(id, snapshots)
+            data = snapshots.map do |snapshot|
+              {
+                timestamp: snapshot.commit_timestamp,
+                commit: snapshot.commit_sha,
+                t_unsafes: snapshot.t_unsafes,
+              }
+            end
+            super(id, data, [])
+          end
+
+          sig { override.returns(String) }
+          def tooltip
+            <<~JS
+              function tooltip_#{id}(d) {
+                moveTooltip(d)
+                  .html("commit <b>" + d.commit + "</b><br>"
+                    + d3.timeFormat("%y/%m/%d")(parseDate(d.timestamp)) + "<br><br>"
+                    + "<b>" + d.t_unsafes + "</b> <code>T.unsafe</code>")
+              }
+            JS
+          end
+
+          sig { override.returns(String) }
+          def plot
+            <<~JS
+              #{x_scale}
+              #{y_scale(
+                min: '0',
+                max: "d3.max(data_#{id}, (d) => d.t_unsafes)",
+                ticks: 'ticks(10)'
+              )}
+              #{area(y: 'd.t_unsafes', color: "#db4437", curve: 'curveStepAfter')}
+              #{line(y: 'd.t_unsafes', color: "#db4437", curve: 'curveStepAfter')}
+              #{points(y: 'd.t_unsafes')}
+              #{x_ticks}
+              #{y_ticks(ticks: 'ticks(5)', format: 'd', padding: 20)}
+                .call(g => g.selectAll(".tick:first-of-type text").remove())
+            JS
+          end
+        end
+
         class Stacked < Timeline
           extend T::Sig
           extend T::Helpers

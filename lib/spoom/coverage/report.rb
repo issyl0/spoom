@@ -211,6 +211,15 @@ module Spoom
             super(title: title, timeline: D3::Timeline::Runtimes.new("timeline_runtimes", snapshots))
           end
         end
+
+        class TUnsafes < Timeline
+          extend T::Sig
+
+          sig { params(snapshots: T::Array[Coverage::Snapshot], title: String).void }
+          def initialize(snapshots:, title: "<code>T.unsafe</code> Timeline")
+            super(title: title, timeline: D3::Timeline::TUnsafes.new("timeline_tunsafes", snapshots))
+          end
+        end
       end
 
       class SorbetIntro < Erb
@@ -298,6 +307,7 @@ module Spoom
         cards << Cards::Timeline::Sigils.new(snapshots: snapshots)
         cards << Cards::Timeline::Calls.new(snapshots: snapshots)
         cards << Cards::Timeline::Sigs.new(snapshots: snapshots)
+        cards << Cards::Timeline::TUnsafes.new(snapshots: snapshots)
         cards << Cards::Timeline::Versions.new(snapshots: snapshots)
         cards << Cards::Timeline::Runtimes.new(snapshots: snapshots)
         cards << Cards::SorbetIntro.new(sorbet_intro_commit: sorbet_intro_commit, sorbet_intro_date: sorbet_intro_date)
