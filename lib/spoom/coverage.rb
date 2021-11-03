@@ -3,6 +3,7 @@
 
 require_relative "coverage/snapshot"
 require_relative "coverage/report"
+require_relative "coverage/sig_candidates_collector"
 require_relative "file_tree"
 
 require "date"

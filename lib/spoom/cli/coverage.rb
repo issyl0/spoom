@@ -171,6 +171,27 @@ module Spoom
         exec("open #{file}")
       end
 
+      desc "sig-candidates", "List methods that should get typed first"
+      def sig_candidates(*files)
+        in_sorbet_project!
+
+        path = exec_path
+        config = sorbet_config
+
+        files = Spoom::Sorbet.srb_files(config, path: path) if files.empty?
+
+        if files.empty?
+          say_error("No file matching `#{sorbet_config_file}`")
+          exit(1)
+        end
+
+        collector = SigCandidates::Collector.new
+        files.each do |file|
+          collector.collect_file(file)
+        end
+        collector.status
+      end
+
       no_commands do
         def parse_time(string, option)
           return nil unless string

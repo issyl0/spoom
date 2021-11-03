@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     spoom (1.1.5)
+      parser
       sorbet (>= 0.5.9204)
       sorbet-runtime (>= 0.5.9204)
       thor (>= 0.19.2)
