@@ -177,7 +177,6 @@ module Spoom
 
         path = exec_path
         config = sorbet_config
-
         files = Spoom::Sorbet.srb_files(config, path: path) if files.empty?
 
         if files.empty?
@@ -187,12 +186,57 @@ module Spoom
 
         collector = SigCandidates::Collector.new
         files.each do |file|
+          next if File.extname(file) == ".rbi"
           collector.collect_file(file)
         end
-        collector.status
+        # collector.status
+
+        lsp_root = File.expand_path(path)
+        lsp = Spoom::LSP::Client.new(
+          Spoom::Sorbet::BIN_PATH,
+          "--lsp",
+          "--enable-all-experimental-lsp-features",
+          "--disable-watchman",
+          path: lsp_root
+        )
+
+        lsp.open(lsp_root)
+
+        collector.sends.each do |key, send|
+          next if SigCandidates::Collector::EXCLUDED_SENDS.include?(key)
+          send.nodes.each do |file, node|
+            selector = node.location.selector
+            line = selector.line
+            column = selector.column
+
+            recv = node.children.first
+            recv_type = "<self>"
+            if recv
+              recv_loc = recv.location.expression
+              recv_line = recv_loc.line
+              recv_column = recv_loc.column
+              recv_hover = lsp.hover(to_uri(file), recv_line - 1, recv_column + 1)&.contents
+              recv_type = recv_hover.lines.first.strip if recv_hover
+            end
+
+            print("Calling `#{recv_type}##{key}` at #{file}:#{line}:#{column}: ")
+            hover = lsp.hover(to_uri(file), line - 1, column + 1)&.contents
+            if hover && hover.match?("sig")
+              puts hover.lines.first
+            else
+              puts "no sig"
+            end
+          end
+        end
+
+        lsp.close
       end
 
       no_commands do
+        def to_uri(path, root_path: exec_path)
+          "file://" + File.join(File.expand_path(root_path), path)
+        end
+
         def parse_time(string, option)
           return nil unless string
           Time.parse(string)

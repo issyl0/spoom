@@ -9,6 +9,9 @@ module Spoom
       extend T::Sig
       include Comparable
 
+      sig { returns(T.nilable(String)) }
+      attr_reader :file
+
       sig { returns(String) }
       attr_reader :name
 
@@ -18,8 +21,9 @@ module Spoom
       sig { returns(T::Boolean) }
       attr_reader :singleton
 
-      sig { params(name: String, def_node: AST::Node, sig_nodes: T::Array[AST::Node], singleton: T::Boolean).void }
-      def initialize(name, def_node, sig_nodes, singleton: false)
+      sig { params(file: T.nilable(String), name: String, def_node: AST::Node, sig_nodes: T::Array[AST::Node], singleton: T::Boolean).void }
+      def initialize(file, name, def_node, sig_nodes, singleton: false)
+        @file = file
         @name = name
         @def_node = def_node
         @sig_nodes = sig_nodes
@@ -54,20 +58,23 @@ module Spoom
       sig { returns(String) }
       attr_reader :name
 
+      sig { returns(T::Array[[T.nilable(String), AST::Node]]) }
+      attr_reader :nodes
+
       sig { params(name: String).void }
       def initialize(name)
         @name = name
-        @send_nodes = T.let([], T::Array[AST::Node])
+        @nodes = T.let([], T::Array[[T.nilable(String), AST::Node]])
       end
 
-      sig { params(send_node: AST::Node).void }
-      def add_send(send_node)
-        @send_nodes << send_node
+      sig { params(file: T.nilable(String), node: AST::Node).void }
+      def add_send(file, node)
+        @nodes << [file, node]
       end
 
       sig { returns(Integer) }
       def times
-        @send_nodes.length
+        @nodes.length
       end
 
       sig { params(other: Object).returns(Integer) }
@@ -95,18 +102,24 @@ module Spoom
       ::Parser::Builders::Default.emit_index                = true
       ::Parser::Builders::Default.emit_arg_inside_procarg0  = true
 
+      sig { returns(T::Hash[String, Send]) }
+      attr_reader :sends
+
       sig { void }
       def initialize
         @methods = T.let([], T::Array[Method])
         @sends = T.let({}, T::Hash[String, Send])
         @last_sigs = T.let([], T::Array[AST::Node])
+        @current_file = T.let(nil, T.nilable(String))
       end
 
       sig { params(file: String).void }
       def collect_file(file)
         contents = File.read(file)
         node = ::Parser::CurrentRuby.parse(contents)
+        @current_file = file
         visit(node)
+        @current_file = nil
       rescue ::Parser::SyntaxError => e
         raise "ParseError (#{e})"
         # raise ParseError.new(e.message, Loc.from_ast_loc(file, e.diagnostic.location))
@@ -162,7 +175,7 @@ module Spoom
       sig { params(node: AST::Node).void }
       def visit_def(node)
         name = node.children[0].to_s
-        @methods << Method.new(name, node, @last_sigs.dup)
+        @methods << Method.new(@current_file, name, node, @last_sigs.dup)
         @last_sigs.clear
         visit(node.children[2])
       end
@@ -170,7 +183,7 @@ module Spoom
       sig { params(node: AST::Node).void }
       def visit_defs(node)
         name = node.children[1].to_s
-        @methods << Method.new(name, node, @last_sigs.dup, singleton: true)
+        @methods << Method.new(@current_file, name, node, @last_sigs.dup, singleton: true)
         @last_sigs.clear
         visit(node.children[3])
       end
@@ -179,7 +192,7 @@ module Spoom
       def visit_send(node)
         name = node.children[1].to_s
         @last_sigs << node if name == "sig"
-        send_for_name(name).add_send(node)
+        send_for_name(name).add_send(@current_file, node)
         visit_all(node.children[2..])
       end
 

@@ -1,11 +1,8 @@
 # typed: true
 
-require "sorbet-runtime"
+a = T.let([], T::Array[T.untyped])
+a << 1
+puts a.length
 
-extend T::Sig
-
-T.assert_type!([1, 2, 3], Array[Integer])
-T.assert_type!({}, Hash[String, Integer])
-T.assert_type!([1, 2, 3], Enumerable[Integer])
-T.assert_type!([1, 2, 3], Enumerator[Integer])
-T.assert_type!([1].lazy.grep(1..10), Enumerator::Lazy[Integer])
+first = T.must(a.first)
+puts first.foo
