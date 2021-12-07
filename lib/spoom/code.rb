@@ -4,4 +4,5 @@
 require_relative "code/loc"
 require_relative "code/parse"
 require_relative "code/collect_sends"
+require_relative "code/find_gem_methods"
 require_relative "code/match_sends_and_sigs"

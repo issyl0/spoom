@@ -1,4 +1,4 @@
-# typed: true
+# typed: false
 
 a = T.let([], T::Array[T.untyped])
 a << 1

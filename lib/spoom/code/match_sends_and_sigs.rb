@@ -29,7 +29,7 @@ module Spoom
 
       sig { returns(String) }
       def id
-        "#{recv_type || '<unknown>'}.#{send.method_name}"
+        "#{recv_type || '<unknown>'}##{send.method_name}"
       end
 
       sig { returns(String) }
@@ -60,6 +60,7 @@ module Spoom
 
       sig { params(send: Send).returns(SendAndSig) }
       def match_send(send)
+        # puts send
         recv_loc = send.recv_loc
         recv_type = nil
 
@@ -101,7 +102,11 @@ module Spoom
         contents = hover&.contents
         return nil unless contents
         return nil if contents.empty?
-        contents.lines.first&.strip
+        type = contents.lines.first&.strip
+        if type&.match?(/^sig/)
+          type = type.gsub(/.*returns\((.*)\).*/, "\\1")
+        end
+        type
       end
     end
   end

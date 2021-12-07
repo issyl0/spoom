@@ -3,6 +3,7 @@
 
 require 'open3'
 require 'json'
+require 'timeout'
 
 require_relative 'lsp/base'
 require_relative 'lsp/structures'
@@ -30,13 +31,15 @@ module Spoom
       end
 
       def read_raw
-        header = @out.gets
+        Timeout.timeout(1) do
+          header = @out.gets
 
-        # Sorbet returned an error and forgot to answer
-        raise Error::BadHeaders, "bad response headers" unless header&.match?(/Content-Length: /)
+          # Sorbet returned an error and forgot to answer
+          raise Error::BadHeaders, "bad response headers" unless header&.match?(/Content-Length: /)
 
-        len = header.slice(::Range.new(16, nil)).to_i
-        @out.read(len + 2) # +2 'cause of the final \r\n
+          len = header.slice(::Range.new(16, nil)).to_i
+          @out.read(len + 2) # +2 'cause of the final \r\n
+        end
       end
 
       def read
