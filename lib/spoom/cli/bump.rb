@@ -86,6 +86,7 @@ module Spoom
         error_url_base = Spoom::Sorbet::Errors::DEFAULT_ERROR_URL_BASE
         result = Sorbet.srb_tc(
           "--error-url-base=#{error_url_base}",
+          "--cache-dir=''",
           path: exec_path,
           capture_err: true,
           sorbet_bin: options[:sorbet]
