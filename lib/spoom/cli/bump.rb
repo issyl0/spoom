@@ -91,6 +91,11 @@ module Spoom
           sorbet_bin: options[:sorbet]
         )
 
+        puts "DEBUGGING OUTPUT ==========================="
+        puts result.out
+        puts result.err
+        puts result.exit_code
+
         check_sorbet_segfault(result.exit_code) do
           say_error(<<~ERR, status: nil)
             It means one of the file bumped to `typed: #{to}` made Sorbet crash.
