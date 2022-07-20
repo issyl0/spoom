@@ -514,6 +514,17 @@ module Spoom
         end
       end
 
+      def test_bump_display_sorbet_error
+        @project.write("file.rb", <<~RB)
+          # typed: false
+        RB
+        result = @project.bundle_exec("spoom bump --no-color --sorbet-options=\"--not-found\"")
+        assert_equal(<<~MSG, result.err)
+          Option ‘not-found’ does not exist. To see all available options pass `--help`.
+        MSG
+        refute(result.status)
+      end
+
       def test_bump_preserve_empty_line
         @project.write("file1.rb", <<~RB)
           # typed: false
