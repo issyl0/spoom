@@ -476,6 +476,14 @@ module Spoom
       end
 
       def test_bump_with_sorbet_segfault
+        # Create a fake Sorbet that will segfault
+        @project.write("mock_sorbet", <<~RB)
+          #!/usr/bin/env ruby
+          $stderr.puts "segfault"
+          exit(139)
+        RB
+        @project.bundle_exec("chmod +x mock_sorbet")
+
         @project.gemfile(<<~GEMFILE)
           source "https://rubygems.org"
 
@@ -494,24 +502,20 @@ module Spoom
           # typed: false
           [{1 => 2}] + [{}]
         RB
-        Bundler.with_unbundled_env do
-          result = @project.bundle_install
-          assert(result.status)
 
-          result = @project.bundle_exec("spoom bump --no-color")
-          assert_equal(<<~OUT, result.err)
-            !!! Sorbet exited with code 139 - SEGFAULT !!!
+        result = @project.bundle_exec("spoom bump --no-color --sorbet #{@project.path}/mock_sorbet")
+        assert_equal(<<~OUT, result.err)
+          !!! Sorbet exited with code 139 - SEGFAULT !!!
 
-            This is most likely related to a bug in Sorbet.
-            It means one of the file bumped to `typed: true` made Sorbet crash.
-            Run `spoom bump -f` locally followed by `bundle exec srb tc` to investigate the problem.
-          OUT
-          refute(result.status)
+          This is most likely related to a bug in Sorbet.
+          It means one of the file bumped to `typed: true` made Sorbet crash.
+          Run `spoom bump -f` locally followed by `bundle exec srb tc` to investigate the problem.
+        OUT
+        refute(result.status)
 
-          assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/cant_be_bump1.rb"))
-          assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/cant_be_bump2.rb"))
-          assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/will_segfault.rb"))
-        end
+        assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/cant_be_bump1.rb"))
+        assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/cant_be_bump2.rb"))
+        assert_equal("false", Sorbet::Sigils.file_strictness("#{@project.path}/will_segfault.rb"))
       end
 
       def test_bump_display_sorbet_error

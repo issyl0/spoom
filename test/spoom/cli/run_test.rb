@@ -285,28 +285,27 @@ module Spoom
       end
 
       def test_display_sorbet_segfault
-        @project.gemfile(<<~GEMFILE)
-          source "https://rubygems.org"
+        # Create a fake Sorbet that will segfault
+        @project.write("mock_sorbet", <<~RB)
+          #!/usr/bin/env ruby
+          $stderr.puts "segfault"
+          exit(139)
+        RB
+        @project.bundle_exec("chmod +x mock_sorbet")
 
-          gem "sorbet-static", "= 0.5.9267"
-          gem "spoom", path: "#{Spoom::SPOOM_PATH}"
-        GEMFILE
+        # Any file will segfault with this
         @project.write("will_segfault.rb", <<~RB)
           # typed: true
-          [{1 => 2}] + [{}]
+          foo
         RB
-        Bundler.with_unbundled_env do
-          result = @project.bundle_install
-          assert(result.status)
 
-          result = @project.bundle_exec("spoom tc --no-color")
-          assert_equal(<<~OUT, result.err)
-            !!! Sorbet exited with code 139 - SEGFAULT !!!
+        result = @project.bundle_exec("spoom tc --no-color --sorbet #{@project.path}/mock_sorbet")
+        assert_equal(<<~OUT, result.err)
+          !!! Sorbet exited with code 139 - SEGFAULT !!!
 
-            This is most likely related to a bug in Sorbet.
-          OUT
-          refute(result.status)
-        end
+          This is most likely related to a bug in Sorbet.
+        OUT
+        refute(result.status)
       end
 
       def test_display_sorbet_error
